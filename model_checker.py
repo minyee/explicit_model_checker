@@ -32,7 +32,7 @@ def parseKripFile(filename):
 		states = State(currId, adjacencyList, apDictForState)
 
 		line = kripFile.readline()
-		
+
 		State(id)
 		#prepare for next iteration
 		line = kripFile.readline()
@@ -41,7 +41,7 @@ def parseKripFile(filename):
 	ks = KripkeStructure()
 	return ks
 
-def satAP(KripkeSet,apDict)
+def satAP(KripkeSet,apDict):
 	outputSet = [0]
 	i = 0
 	for state in KripkeSet:
@@ -49,7 +49,7 @@ def satAP(KripkeSet,apDict)
 			outputSet.insert(i, state)
 			i += 1
 	return outputSet
-	
+
 def satEX(APdictArg, kripkeStructure):
 	firstSet = [0]
 	i = 0
@@ -89,4 +89,3 @@ def satisfy(KripkeSet, ctlStructure) :
 		#call
 def modelCheckerMain(file1, file2):
 	kripkeStruct = parseKripFile(file1)
-

@@ -1,14 +1,21 @@
 #Author: Erik Anderson
 #Date: 11/8/2017
-#Description: Assumptions: First two processes are FSM processes, 'rising_edge' string is not used for anything besides the event
-#               All outputs defined for each state. Processes list states in same order
+#Description:
 
-#line = line.strip('\n').split(',')
 import re
+from node import *
+from kripke_structure import *
+
 class vhdlParser:
     def __init__(self,filename):
         '''
         VHDL Parser class
+        Assumptions (all can be fixed but leave in for now):
+            1. First two processes are FSM processes (does not matter the order)
+            2. 'rising_edge' string is not used for anything besides the event
+            3. All outputs defined for each state.
+            4. Processes list states in same order.
+            5. RESET NOT INCLUDED
         '''
         self.filename = filename
         self.process1 = []
@@ -145,3 +152,46 @@ class vhdlParser:
             f.write(str(self.transitions[j]).replace('[','').replace(']','').replace(' ',''))
             f.write('\n')
         f.close()
+
+    def returnKripkeStructure(self,filename):
+    	'''
+    	Returns List of State objects used to Initialize kripke structure. Uses .krip file to extract info
+    		State __init__(self, stateID, adjacencyList, APdictArg):
+    			.APdict => key => AP, val => value of AP
+    			.ID => stateID
+    			.adjacency list => sublist of full list of nodes
+    	'''
+        graphNodeList = [] #id(key) returns state object(value)
+        ApDictOfDict = {} #id(key) returns dictionary of APs
+        ApDict = {}
+        adjacencyList = []
+        adjacencyDict = {}
+
+        f = open(self.filename + '.krip','r')
+        #First two lines are not needed
+        numStates = int(f.readline().strip('\n'))
+        APs = f.readline()
+        APs = APs.strip('\n').split(',')
+        for line in f:
+            if '{' in line:
+                #Generate stateID and APDictofDict
+                stateID = int(line[0])
+                line = line.strip('\n').replace('}','').replace('{','').replace(' ','').replace(',',':').split(':')[1:len(line)-1]
+                ApDictOfDict[stateID] = {}
+                for i in range(len(line)):
+                    if i % 2 == 0:
+                        ApDictOfDict[stateID][line[i]] = line[i+1]
+            else:
+                adjacencyList = []
+                line = line.strip('\n').split(',')
+                for i in range(len(line)):
+                    line[i] = int(line[i])
+                    adjacencyList.append(line[i])
+                adjacencyDict[stateID] = adjacencyList
+
+        for i in range(numStates):
+            graphNodeList.append(State(i,ApDictOfDict[i]))
+        for i in range(numStates):
+            for item in adjacencyDict[i]:
+                graphNodeList[i].addNeighborNode(graphNodeList[item])
+    	return KripkeStructure(graphNodeList,ApDictOfDict)

@@ -2,18 +2,10 @@ import copy
 import sys
 
 class Node:
-	def __init__(self, id):
-		self.id = id
+	def __init__(self, stateID):
 		self.adjacencyList = []
-		self.numNeighbors = 0
-		self.addAtomicProposition()
-		return
-
-	def __init__(self, id, adjacencyListArg):
-		self.adjacencyList = adjacencyListArg
-		self.numNeighbors = self.adjacencyList.length()
-		self.id = id
-		return
+		self.numNeighbors = len(self.adjacencyList)
+		self.id = stateID
 
 	def getId(self):
 		return self.id
@@ -22,29 +14,26 @@ class Node:
 		self.adjacencyList.append(newNode)
 		return
 
-	def getAdjacencyList(self, index):
-		if index not in range(length(self.adjacencyList)):
-			return None
-		return self.adjacencyList[index]
+	def getAdjacencyList(self):
+		return self.adjacencyList
 
 	# Checks if a node is a neighbor to the current node
 	def isNeighbor(self, nodeOfInterest):
 		for someNode in self.adjacencyList:
-			if someNode.getId() == nodeOfInterest.getId()
+			if someNode.getId() == nodeOfInterest.getId():
 				return True
 		return False
 
 
 class Graph:
-	def __init__(self, graphNodeListArg):
+	def __init__(self, graphNodeList):
 		self.graphNodeList = graphNodeList # This is the forward graph
-		self.reverseGraph = None
-		reverseGraph()
-		return self
+		#self.reverseGraph = None
+		self.reverseGraph()
 
 	def reverseGraph(self):
 		reversedG = {}
-		graphSize = self.graphNodeList.size()
+		graphSize = len(self.graphNodeList)
 		## Initialize the reverse graph
 		for i in range(graphSize):
 			reversedG[i] = Node(i)
@@ -55,7 +44,7 @@ class Graph:
 				neighborNodeID = neighborNode.getId()
 				reversedG[neighborNodeID].addNeighborNode(reversedG[currNodeID])
 		self.reverseGraph = [0] * graphSize
-		for i in range(graphSize)
+		for i in range(graphSize):
 			node = reversedG[i]
 			self.reverseGraph[i] = node
 		return
@@ -63,13 +52,13 @@ class Graph:
 	def findReversedPath(self, srcNode, dstNode):
 		srcId = srcNode.getId()
 		dstId = dstNode.getId()
-		
+
 	# Uses Tarjan to find SCC
 	def findSCC(self):
 		#firstNode = copy.copy(self.graphNodeList[0])
 		visitedNode = {} #maps node by id and see if they have been visited
 
-		for node in self.graphNodeList
+		for node in self.graphNodeList:
 			visitedNode[node.getId()] = tuple(-1, node.getId())
 		time = 0
 		nodeStack = [self.graphNodeList[0]]
@@ -84,10 +73,10 @@ class Graph:
 				neighborNodeID = neighborNode.getId()
 				(visitedTime,lowestID) = visitedNode[neighborNodeID]
 				if (visitedTime < 0): # this node has been visited before
-					#visitedNode[neighborNode.getId()] = 
+					#visitedNode[neighborNode.getId()] =
 					visitedNode[neighborNodeID] = tuple(visitedNode, min(currNodeLowestAncestor, lowestID))
 					nodeStack.append(neighborNode)
-				else 
+				else:
 					#figure out if this is an upward edge in the tree
 					if visitedTime < time:
 						# found an SCC
@@ -95,7 +84,7 @@ class Graph:
 						foundCycle = True
 			if foundCycle:
 				visitedNode[currNode.getId()] = tuple(time,ancestorID)
-			else 
+			else:
 				visitedNode[currNode.getId()] = tuple(time,currNodeLowestAncestor)
 			time += 1
 
@@ -107,11 +96,10 @@ class Graph:
 			if commonAncestors[ancestor] == None:
 				#no ancestors
 				commonAncestors[ancestor] = [i]
-			else: 
+			else:
 				commonAncestors[ancestor].append(i)
 		## Finally populate these nodes into SCC, ignoring SCC's with only 1 node
 		for aList in commonAncestors:
 			if aList.size() > 1:
 				SCCs.append(aList)
 		return SCCs
-
