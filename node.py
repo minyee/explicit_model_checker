@@ -27,14 +27,20 @@ class Node:
 			return None
 		return self.adjacencyList[index]
 
-	def addAtomicProposition(self, ):
+	# Checks if a node is a neighbor to the current node
+	def isNeighbor(self, nodeOfInterest):
+		for someNode in self.adjacencyList:
+			if someNode.getId() == nodeOfInterest.getId()
+				return True
+		return False
+
 
 class Graph:
 	def __init__(self, graphNodeListArg):
 		self.graphNodeList = graphNodeList # This is the forward graph
 		self.reverseGraph = None
 		reverseGraph()
-		return
+		return self
 
 	def reverseGraph(self):
 		reversedG = {}
@@ -108,5 +114,4 @@ class Graph:
 			if aList.size() > 1:
 				SCCs.append(aList)
 		return SCCs
-
 
