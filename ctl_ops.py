@@ -31,5 +31,8 @@ class CTLNestedStructure:
 	def getOp(self):
 		return self.op
 
+	def getNestedOp(self):
+		return (self.nextOp1, self.nextOp2)
+
 	def getAPdict(self):
 		return self.apDict

@@ -50,8 +50,17 @@ def satAP(KripkeSet,apDict):
 			i += 1
 	return outputSet
 
-def satEX(APdictArg, kripkeStructure):
+def satNOTAP(KripkeSet, apDict):
+	apDictNew = {}
+	for key, val in apDict:
+		val = not val
+		apDictNew.insert(key, !val)
+	return satAP(KripkeSet, apDict)
+
+# TODO: Needs correction for recursive nested CTL operations
+def satEX(kripkeStructure, ctlStructure):
 	firstSet = [0]
+	APdictArg = ctlStructure.getAPdict()
 	i = 0
 	for state in kripkeStructure:
 		if state.satisfyAP(APdictArg):
@@ -66,7 +75,83 @@ def satEX(APdictArg, kripkeStructure):
 				i += 1
 	return secondSet
 
-def satisfy(KripkeSet, ctlStructure) :
+# TODO: Check correctness of implementation
+def satEU(KripkeStructure, KripkeSet, ctlStructure):
+	ctlOp1, ctlOp2 = ctlStructure.getNestedOp()
+	Q = satisfy(KripkeSet, ctlStructure.ctlOp2)
+	iterate = True
+	while iterate:
+		iterate = False
+		for state in Q:
+			reversedGraphNeighborList = state.getReversedGraphNeighborList(state.getId())
+			newQ = satisfy(KripkeStructure,reversedGraphNeighborList, ctlOp1)
+			if len(newQ) > 0:
+				Q = unionSets(newQ, Q)
+				iterate = True	
+	return Q
+
+def satEG(KripkeStructure, KripkeSet, ctlStructure):
+	ctlop1, ctlop2 = ctlStructure.getNestedOp
+	Q = satisfy(KripkeStructure, KripkeSet, ctlop1)
+	QID = [0] * len(Q)
+	#i = 0
+	subGraphList = {}
+	for state in Q:
+		subGraphList.insert(state.getId(), Node(state.getId()))
+
+	#Generate subgraph to find SCC
+	subgraph = Graph(subGraphList)
+	for state in Q:
+		node = KripkeStructure.getNode(state.getId())
+		for neighbor in node.getAdjacencyList():
+			if neighbor.getId in subGraphList.keys():
+				state.addNeighbor(subGraphList[neighbor.getId])
+
+	#Done generating subgraph
+	reversedSubGraph = subgraph.getReversedGraph()
+	sccs = subgraph.findSCC()
+	#Note: sccs is a 
+	finalNodes = {}
+	for cycles in sccs:
+		for node in cycles:
+			if node.getId() not in finalNodes.keys():
+				finalNodes.insert(node.getId(), node)
+			for srcNode in reversedSubGraph.getNode(node.getId()).getAdjacencyList:
+				if srcNode.getId() not in finalNodes.keys():
+					finalNodes.insert(srcNode.getId(), srcNode)
+	finalStates = []
+	for key, val in finalNodes:
+		i = 0
+		for state in KripkeSet:
+			if state.getId() == key:
+				finalStates.append(KripkeSet[i])
+				break
+			else:
+				i+=1
+
+	return finalStates
+
+# Finds the union of two sets, S1, and S2
+# Note: S1, S2 are given as lists
+def unionSets(S1, S2):
+	union = [0]
+	
+	size1 = len(S1)
+	size2 = len(S2)
+	totalSize = size1 + size2
+	for i in range(size1):
+		union.insert(i, S1[i])
+	for i in range(size2):
+		if S2[i] not in union:
+			union.insert(i + size1, S2[i])
+	return union
+
+# Main recursive routine to check if a Kripke Structure
+# satisfies a CTL statement, which is recursive and is fed as
+# the argument ctlStructure. The KripkeStructure argument is the
+# the whole Kripke structure, while KripkeSet is the subset of states
+# in KripkeSet that satisfies some previous conditions
+def satisfy(KripkeStructure, KripkeSet, ctlStructure) :
 	# negligible case
 	if ctlStructure.getOp() == None:
 		return None
@@ -77,15 +162,18 @@ def satisfy(KripkeSet, ctlStructure) :
 	elif ctlStructure.getOp() == AP:
 		return satAP(KripkeSet, ctlStructure.getAPdict())
 	elif ctlStructure.getOp() == NOTAP:
-		#call
+		return satNOTAP(KripkeSet, ctlStructure.getAPdict())
 	elif ctlStructure.getOp() == OR:
-		#call
+		nestedOp1, nestedOp2 = ctlStructure.getNestedOp()
+		S1 = satisfy(KripkeStructure, KripkeSet, nestedOp1)
+		S2 = satisfy(KripkeStructure, KripkeSet, nestedOp2)
+		return union(S1,S2)
 	elif ctlStructure.getOp() == EX:
-		#call
+ 		return satEX(KripkeStructure, KripkeSet, ctlStructure) ## CHECK THIS, THIS IS WRONG. EX needs to be recursive
 	elif ctlStructure.getOp() == EU:
-		#call
+		return satEU(KripkeStructure, KripkeSet, ctlStructure)
 	else:
-		#finally the case has to be EG
-		#call
+		return satEG(KripkeStructure, KripkeSet, ctlStructure)
+
 def modelCheckerMain(file1, file2):
 	kripkeStruct = parseKripFile(file1)
