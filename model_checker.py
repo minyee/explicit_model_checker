@@ -1,6 +1,6 @@
 import kripke_structure
 import sys
-import file
+#import file
 import io
 from tokenize import tokenize, untokenize, NUMBER, STRING, NAME, OP
 
@@ -45,7 +45,7 @@ def satAP(KripkeSet,apDict):
 	outputSet = [0]
 	i = 0
 	for state in KripkeSet:
-		if state.satisfyAP()
+		if state.satisfyAP(apDict):
 			outputSet.insert(i, state)
 			i += 1
 	return outputSet
@@ -54,26 +54,30 @@ def satNOTAP(KripkeSet, apDict):
 	apDictNew = {}
 	for key, val in apDict:
 		val = not val
-		apDictNew.insert(key, !val)
-	return satAP(KripkeSet, apDict)
+		apDictNew.insert(key, val)
+	return satAP(KripkeSet, apDictNew)
 
-# TODO: Needs correction for recursive nested CTL operations
-def satEX(kripkeStructure, ctlStructure):
-	firstSet = [0]
-	APdictArg = ctlStructure.getAPdict()
-	i = 0
-	for state in kripkeStructure:
-		if state.satisfyAP(APdictArg):
-			firstSet.insert(i, state)
-			i += 1
-	secondSet = [0]
-	i = 0
-	for state in kripkeStructure:
-		for neighborState in firstSet:
-			if state.isNeighbor(neighborState):
-				secondSet.insert(i, state)
-				i += 1
-	return secondSet
+def satEX(kripkeStructure, KripkeSet, ctlStructure):
+	ctlOp1, _ = ctlStructure.getNestedOp() 
+	firstSet = satisfy(kripkeStructure, KripkeSet, ctlOp1)
+	#APdictArg = ctlStructure.getAPdict()
+
+	secondSet = []
+	reversedGraph = kripkeStructure.getReversedGraph()
+
+	for state in firstSet:
+		currID = state.getId()
+		reversedAdjacencyList = reversedGraph.getNode(currID).getAdjacencyList()
+		for neighborState in reversedGraph:
+			if neigborState.getId() not in secondSet:
+				secondSet.append(neighborState.getId())
+
+	thirdSet = []
+	for state in KripkeSet:
+		if state.getId() in secondSet:
+			thirdSet.append(state)
+
+	return thirdSet
 
 # TODO: Check correctness of implementation
 def satEU(KripkeStructure, KripkeSet, ctlStructure):
@@ -146,6 +150,12 @@ def unionSets(S1, S2):
 			union.insert(i + size1, S2[i])
 	return union
 
+# TODO: Given a ctl formula string, create a CTLstructure data type which
+# is recursive so that the CTLStructure and satisfy method defined below can work
+def parseCTLFormula(formulaString):
+
+	return 
+
 # Main recursive routine to check if a Kripke Structure
 # satisfies a CTL statement, which is recursive and is fed as
 # the argument ctlStructure. The KripkeStructure argument is the
@@ -175,5 +185,5 @@ def satisfy(KripkeStructure, KripkeSet, ctlStructure) :
 	else:
 		return satEG(KripkeStructure, KripkeSet, ctlStructure)
 
-def modelCheckerMain(file1, file2):
-	kripkeStruct = parseKripFile(file1)
+#def modelCheckerMain(file1, file2):
+#	kripkeStruct = parseKripFile(file1)

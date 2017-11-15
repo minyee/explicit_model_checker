@@ -19,5 +19,5 @@ class State(Node):
 
 class KripkeStructure(Graph):
 	def __init__(self, graphNodeListArg, ApDictOfDict):
-		Graph.__init__(self,graphNodeListArg)
+		Graph.__init__(self.graphNodeListArg)
 		self.ApDictOfDict = ApDictOfDict

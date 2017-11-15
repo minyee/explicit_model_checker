@@ -11,7 +11,9 @@ class Node:
 		return self.id
 
 	def addNeighborNode(self, newNode):
-		self.adjacencyList.append(newNode)
+		if newNode != None:
+			self.adjacencyList.append(newNode)
+			self.numNeighbors += 1
 		return
 
 	def getAdjacencyList(self):
@@ -30,6 +32,7 @@ class Graph:
 		self.numNodes = len(graphNodeList)
 		self.graphNodeList = graphNodeList # This is the forward graph
 		#self.reverseGraph = None
+		self.reversedGraph = []
 		self.reverseGraph()
 
 	# Given the node id, returns the node reference
@@ -52,14 +55,14 @@ class Graph:
 			for neighborNode in node.getAdjacencyList():
 				neighborNodeID = neighborNode.getId()
 				reversedG[neighborNodeID].addNeighborNode(reversedG[currNodeID])
-		self.reverseGraph = [0] * graphSize
+		self.reversedGraph = [0] * graphSize
 		for i in range(graphSize):
 			node = reversedG[i]
-			self.reverseGraph[i] = node
+			self.reversedGraph[i] = node
 		return self
 
-	def.getReversedGraph(self):
-		return self.reversedG
+	def getReversedGraph(self):
+		return self.reversedGraph
 
 	def getReversedGraphNeighborList(src):
 		for i in range(self.numNodes):
