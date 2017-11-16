@@ -1,5 +1,7 @@
-import model_checker
+from model_checker import *
 from node import *
+from ctl_ops import *
+#from enum import enum
 
 print "Hello, this is the start of the unit tests for model_checker"
 numNodes = 10
@@ -45,6 +47,9 @@ for nodeReversed in reversedGraph1:
 
 	
 
-
+print "Now check parserCTL"
+ctl1 = "E(EG(T))U((EX(F))|(T))"
+ctl1Struct = parseCTLString(ctl1)
+print getCTLFormulaString(ctl1Struct)
 
 print "Completed model_checker unit test, goodbye"

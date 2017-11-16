@@ -2,7 +2,127 @@ import kripke_structure
 import sys
 #import file
 import io
+from ctl_ops import *
 from tokenize import tokenize, untokenize, NUMBER, STRING, NAME, OP
+
+
+def findORWithinBound(charList, start, end):
+	i = 0
+	while start + i <= end:
+		if charList[start + i] == "|":
+			return (start + i)
+	return (-10)
+
+# NOTE: returns a offset greater than end if the closing parenthesis is not found
+def findCloseParenIndex(charList, offset, end):
+	assert(offset >= 0)
+	foundAnotherOpenParen = 0
+	iterate = True
+	while iterate:
+		offset += 1
+		if offset > end:
+			#SHIT WE HAVE A PROBLEM
+			return -22
+		assert(foundAnotherOpenParen >= 0)
+		if charList[offset] == "(":
+			foundAnotherOpenParen += 1
+		elif charList[offset] == ")":
+			if foundAnotherOpenParen == 0:
+				iterate = False
+				break
+			else:
+				foundAnotherOpenParen -= 1
+
+	return offset
+
+
+#Note: this function will only work correctly when there is a correct nesting structure
+def parseCTLRecursive(charList, start, end):
+	#	ctlStructure = CTLNestedStructure()
+	#Base case for when the argument is an empty string
+	string = ""
+	for i in range(start, end+1, 1):
+		string += charList[i]
+
+	print string
+
+	assert(start <= end)
+	# Case 1: Just an AP (Base Case) or Trivial Cases TRUE and FALSE
+	if start == end:
+		ctlStruct = None
+		if charList[start] == "T":
+			ctlStruct = CTLNestedStructure(CTLOperators.TRUE, None)
+		elif charList[start] == "F":
+			ctlStruct = CTLNestedStructure(CTLOperators.FALSE, None)
+		else:
+			assert(charList[start].islower())
+			ctlStruct = CTLNestedStructure(CTLOperators.AP, charList[start])
+			print charList[start]
+		return ctlStruct
+	
+	# Case 2: find account for the OR, we restrict the structure to look like: (exp) | (exp)
+	elif charList[start] == "(": 
+		orIndex = findCloseParenIndex(charList, start, end) + 1
+		assert(orIndex >= 0 and orIndex > start and orIndex < end)
+		leftCTL = parseCTLRecursive(charList, start + 1, orIndex - 2)
+		assert(charList[orIndex + 1] == "(" and charList[end] == ")")
+		rightCTL = parseCTLRecursive(charList, orIndex + 2, end - 1)
+		ctlStruct = CTLNestedStructure(CTLOperators.OR, None)
+		ctlStruct.addNestedOp(leftCTL, rightCTL, None)
+		return ctlStruct
+	# Case 3: first for the cases for E, there are three distinct possibilities
+	elif charList[start] == "E": 
+		# EX
+		if charList[start + 1] == "X":
+			assert(charList[start + 2] == "(")
+			offset = start + 2
+			closedParenIndex = findCloseParenIndex(charList, offset, end)
+			assert(closedParenIndex == end)
+			ctlStructure = CTLNestedStructure(CTLOperators.EX, None)
+			nestedStruct = parseCTLRecursive(charList, start + 3, closedParenIndex - 1)
+			ctlStructure.addNestedOp(nestedStruct, None, None)
+			return ctlStructure
+		
+		#EG
+		elif charList[start + 1] == "G":
+			assert(charList[start + 2] == "(")
+			offset = start + 2
+			closedParenIndex = findCloseParenIndex(charList, offset, end)
+			assert(closedParenIndex == end)
+			ctlStructure = CTLNestedStructure(CTLOperators.EG, None)
+			nestedStruct = parseCTLRecursive(charList, start + 3, closedParenIndex - 1)
+			ctlStructure.addNestedOp(nestedStruct, None, None)
+			return ctlStructure
+		
+		#E(exp1)U(exp2)
+		else:
+			assert(charList[start + 1] == "(")
+			offset = start + 1
+			closedParenIndex = findCloseParenIndex(charList, offset, end)
+			assert(closedParenIndex >= 0 and closedParenIndex <= end)
+			assert(charList[closedParenIndex + 1] == "U")
+			assert(charList[end] == ")")
+			left = parseCTLRecursive(charList, offset + 1, closedParenIndex - 1)
+			right = parseCTLRecursive(charList, closedParenIndex + 3, end - 1)
+			ctlStructure = CTLNestedStructure(CTLOperators.EU, None)
+			ctlStructure.addNestedOp(left, right, None)
+			return ctlStructure
+
+	#Case 4: the NOT case
+	elif charList[start] == "~": # The case for ~(exp)
+		assert(charList[start + 1] == "(")
+		assert(charList[end] == ")")
+		nestedStruct = parseCTLRecursive(charList, start + 1, end - 1)
+		ctlStructure = CTLNestedStructure(CTLOperators.NOT, None)
+		ctlStructure.addNestedOp(nestedStruct, None, None)
+		return ctlStructure
+
+	return None
+
+def parseCTLString(ctlFormula):
+	charList = list(ctlFormula)
+	return parseCTLRecursive(charList, 0, len(charList) - 1)
+
 
 def parseKripFile(filename):
 	kripFile = Open(filename, 'r') # open file read only
