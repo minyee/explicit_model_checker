@@ -17,7 +17,7 @@ class vhdlParser:
             4. Processes list states in same order.
             5. RESET NOT INCLUDED
         '''
-        self.filename = filename
+        self.filename = filename.strip('.krip').strip('.vhd')
         self.process1 = []
         self.process2 = []
         self.states = []
@@ -30,6 +30,7 @@ class vhdlParser:
         #Transitions from each state to [list of states that state can transition to]
         self.transitions = []
 
+    def parseVHDL(self):
         self.captureProcesses()
         self.parseProcesses()
         self.generateKrip()
