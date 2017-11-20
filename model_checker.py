@@ -260,6 +260,11 @@ def satEG(KripkeStructure, KripkeSet, ctlStructure):
 def unionSets(S1, S2):
 	union = [0]
 	
+	if S1 == None:
+		return S2
+	if S2 == None:
+		return S1
+
 	size1 = len(S1)
 	size2 = len(S2)
 	totalSize = size1 + size2

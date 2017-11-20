@@ -1,6 +1,7 @@
 from model_checker import *
 from node import *
 from ctl_ops import *
+from recursiveNS import *
 #from enum import enum
 
 print "Hello, this is the start of the unit tests for model_checker"
@@ -48,8 +49,48 @@ for nodeReversed in reversedGraph1:
 	
 
 print "Now check parserCTL"
-ctl1 = "E(EG(T))U((EX(F))|(T))"
-ctl1Struct = parseCTLString(ctl1)
-print getCTLFormulaString(ctl1Struct)
+#ctl1 = "E(EG(T))U((EX(F))|(T))"
+ctl1 = "!EG(EX(p|q)|E(pUq))"
+topOp = generateNS(ctl1)
+print topOp.getCTLFormulaString()
+#stateSet = satisfy(topOp)
 
+
+
+print "Testing Graph Algorithms"
+numNodes = 5
+nodesArray2 = [0] * numNodes
+for i in range(numNodes):
+	nodesArray2[i] = Node(i)
+for i in range(numNodes):
+	nodesArray2[i].addNeighborNode(nodesArray2[(i + 1) % numNodes])
+graph2 = Graph(nodesArray2)
+sccs = graph2.findSCC()
+for cycle in sccs:	
+	string = ""
+	for node in cycle:
+		string += (str(node.getId()) + " ")
+	string += "\n"
+	print "The cycle has: " + string
+
+numNodes = 6
+nodesArray3 = [0] * numNodes
+for i in range(numNodes):
+	nodesArray3[i] = Node(i)
+nodesArray3[0].addNeighborNode(nodesArray3[1])
+nodesArray3[1].addNeighborNode(nodesArray3[2])
+nodesArray3[2].addNeighborNode(nodesArray3[0])
+nodesArray3[2].addNeighborNode(nodesArray3[3])
+nodesArray3[3].addNeighborNode(nodesArray3[4])
+nodesArray3[3].addNeighborNode(nodesArray3[5])
+nodesArray3[4].addNeighborNode(nodesArray3[0])
+nodesArray3[5].addNeighborNode(nodesArray3[3])
+graph3 = Graph(nodesArray3)
+sccs3 = graph3.findSCC()
+for cycle in sccs3:	
+	string = ""
+	for node in cycle:
+		string += (str(node.getId()) + " ")
+	string += "\n"
+	print "The cycle has: " + string
 print "Completed model_checker unit test, goodbye"
