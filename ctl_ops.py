@@ -45,9 +45,6 @@ class CTLNestedStructure:
 	def getLabel(self):
 		return self.label
 
-	def getAPdict(self):
-		return self.apDict
-
 	def getCTLFormulaString(self):
 		string = self.returnCTLFormulaString(self)
 		return string

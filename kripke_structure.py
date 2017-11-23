@@ -13,11 +13,14 @@ class State(Node):
 		'''
 		Checks if this state in the Kripke structure satisfies the APs
 		'''
-		satisfy = True
-		for key, val in apDict.items():
-			if self.APdict.has_key(key):
-				satisfy = satisfy and (self.APdict[key] ^ val)
-		return satisfy
+		satisfyOrNot = True
+		for val in apDict:
+			if self.OutputDict.has_key(val):
+				satisfyOrNot = satisfyOrNot and (int(self.OutputDict[val]) != 0)
+		return satisfyOrNot
+
+	def getAPDict(self):
+		return self.ApDict
 
 class KripkeStructure(Graph):
 	def __init__(self, graphNodeListArg, OutputDictOfDict):
@@ -26,6 +29,21 @@ class KripkeStructure(Graph):
 		#Initialize to be empty
 		self.ApDictOfDict = {}
 		self.ApList = []
+
+	def getState(self, index):
+		for state in self.graphNodeList:
+			if state.getId() == index:
+				return state
+		return None
+
+	def getOutputDictOfDict(self):
+		return self.OutputDictOfDict
+
+	def getApDictOfDict(self):
+		return self.ApDictOfDict
+
+	def getApList(self):
+		return self.ApList
 
 	def addAP(self,ApDefinition):
 		'''

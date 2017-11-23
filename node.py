@@ -42,6 +42,8 @@ class Graph:
 				return node
 		return None
 
+	def getGraphNodeList(self):
+		return self.graphNodeList
 
 	def reverseGraph(self):
 		reversedG = {}
@@ -75,20 +77,6 @@ class Graph:
 		dstId = dstNode.getId()
 		# This method is not finished
 
-	# 
-	def inStack(self, nodeDiscoveryTime, nodeFinishTime, currTime):
-		if currTime > nodeFinishTime:
-			return False
-		elif nodeDiscoveryTime < currTime:
-			return True
-		else:
-			return False
-
-	def visited(self, nodeDiscoveryTime):
-		if nodeDiscoveryTime > 0:
-			return True
-		else:
-			return False
 
 	def findCycleRecursive(self, currNode, discoverTime, low, inStackBool, stack, time, CycleCollection):
 		currNodeID = currNode.getId()

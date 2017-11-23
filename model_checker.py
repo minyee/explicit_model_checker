@@ -162,12 +162,14 @@ def parseKripFile(filename):
 	return ks
 
 def satAP(KripkeSet,apDict):
-	outputSet = [0]
+	outputSet = []
 	i = 0
-	for state in KripkeSet:
+	#print len(KripkeSet)
+	for state in KripkeSet.getGraphNodeList():
 		if state.satisfyAP(apDict):
-			outputSet.insert(i, state)
+			outputSet.append(state)
 			i += 1
+
 	return outputSet
 
 def satNOTAP(KripkeSet, apDict):
@@ -181,19 +183,18 @@ def satEX(kripkeStructure, KripkeSet, ctlStructure):
 	ctlOp1, _ = ctlStructure.getNestedOp() 
 	firstSet = satisfy(kripkeStructure, KripkeSet, ctlOp1)
 	#APdictArg = ctlStructure.getAPdict()
-
 	secondSet = []
 	reversedGraph = kripkeStructure.getReversedGraph()
 
 	for state in firstSet:
 		currID = state.getId()
-		reversedAdjacencyList = reversedGraph.getNode(currID).getAdjacencyList()
+		reversedAdjacencyList = reversedGraph[currID].getAdjacencyList()
 		for neighborState in reversedGraph:
-			if neigborState.getId() not in secondSet:
+			if neighborState.getId() not in secondSet:
 				secondSet.append(neighborState.getId())
 
 	thirdSet = []
-	for state in KripkeSet:
+	for state in kripkeStructure.getGraphNodeList():
 		if state.getId() in secondSet:
 			thirdSet.append(state)
 
@@ -290,22 +291,23 @@ def satisfy(KripkeStructure, KripkeSet, ctlStructure) :
 	# negligible case
 	if ctlStructure.getOp() == None:
 		return None
-	elif ctlStructure.getOp() == TRUE:
+	elif ctlStructure.getOp() == CTLOperators.TRUE:
 		return KripkeSet
-	elif ctlStructure.getOp() == FALSE:
+	elif ctlStructure.getOp() == CTLOperators.FALSE:
 		return None
-	elif ctlStructure.getOp() == AP:
-		return satAP(KripkeSet, ctlStructure.getAPdict())
-	elif ctlStructure.getOp() == NOTAP:
-		return satNOTAP(KripkeSet, ctlStructure.getAPdict())
-	elif ctlStructure.getOp() == OR:
+	elif ctlStructure.getOp() == CTLOperators.AP:
+		return satAP(KripkeSet, ctlStructure.getLabel())
+	elif ctlStructure.getOp() == CTLOperators.NOT:
+		return satNOTAP(KripkeSet, ctlStructure.getLabel())
+	elif ctlStructure.getOp() == CTLOperators.OR:
 		nestedOp1, nestedOp2 = ctlStructure.getNestedOp()
 		S1 = satisfy(KripkeStructure, KripkeSet, nestedOp1)
 		S2 = satisfy(KripkeStructure, KripkeSet, nestedOp2)
 		return union(S1,S2)
-	elif ctlStructure.getOp() == EX:
+	elif ctlStructure.getOp() == CTLOperators.EX:
+		#nestedOp1, nestedOp2 = ctlStructure.getNestedOp()
  		return satEX(KripkeStructure, KripkeSet, ctlStructure) ## CHECK THIS, THIS IS WRONG. EX needs to be recursive
-	elif ctlStructure.getOp() == EU:
+	elif ctlStructure.getOp() == CTLOperators.EU:
 		return satEU(KripkeStructure, KripkeSet, ctlStructure)
 	else:
 		return satEG(KripkeStructure, KripkeSet, ctlStructure)

@@ -142,9 +142,12 @@ class vhdlParser:
         f.write(str(self.numStates))
         f.write('\n')
         #Write APs to file
-        for i in range(len(self.APs)-1):
-            f.write(self.APs[i] + ',')
-        f.write(self.APs[i+1])
+        for i in range(len(self.APs)):
+            if i < len(self.APs) - 1:
+                f.write(self.APs[i] + ',')
+            else:
+                f.write(self.APs[i])
+        #f.write(self.APs[len(self.APs) - 1])
         f.write('\n')
         #Write AP values to file
         for j in range(self.numStates):
@@ -154,7 +157,7 @@ class vhdlParser:
             f.write('\n')
         f.close()
 
-    def returnKripkeStructure(self,filename):
+    def returnKripkeStructure(self):
     	'''
     	Returns List of State objects used to Initialize kripke structure. Uses .krip file to extract info
     		State __init__(self, stateID, adjacencyList, APdictArg):
@@ -195,4 +198,4 @@ class vhdlParser:
         for i in range(numStates):
             for item in adjacencyDict[i]:
                 graphNodeList[i].addNeighborNode(graphNodeList[item])
-    	return KripkeStructure(graphNodeList,ApDictOfDict)
+        return KripkeStructure(graphNodeList,ApDictOfDict)
