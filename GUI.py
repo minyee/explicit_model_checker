@@ -53,11 +53,11 @@ class GUI:
         if '.vhd' in f:
             self.parser = vhdlParser(f)                      #Instantiates parser
             self.parser.parseVHDL()                          #Generates .krip file
-            self.KS = self.parser.returnKripkeStructure(f)   #creates data structure from .krip file
+            self.KS = self.parser.returnKripkeStructure()   #creates data structure from .krip file
             self.openKSEditor()                         #Opens KS editor using data structure
         elif '.krip' in f:
             self.parser = vhdlParser(f)                      #Instantiates parser
-            self.KS = self.parser.returnKripkeStructure(f)   #creates data structure from .krip file
+            self.KS = self.parser.returnKripkeStructure()   #creates data structure from .krip file
             self.openKSEditor()                         #Opens KS editor using data structure
         else:
             print "Incompatible file type. Please try again."

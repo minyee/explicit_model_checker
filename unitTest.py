@@ -42,17 +42,18 @@ reversedGraph1 = graph1.getReversedGraph()
 print reversedGraph1
 for nodeReversed in reversedGraph1:
 	currId = nodeReversed.getId()
-	print "Curr Reversed Node: %d has neighbors: " % currId 
+	print "Curr Reversed Node: %d has neighbors: " % currId
 	tmpstring = ""
-	for neighborReversed in nodeReversed.getAdjacencyList(): 
+	for neighborReversed in nodeReversed.getAdjacencyList():
 		tmpstring += " Node %d" % neighborReversed.getId()
 	print tmpstring
 
-	
+
 
 print "Now check parserCTL"
 #ctl1 = "E(EG(T))U((EX(F))|(T))"
-ctl1 = "!(EG((EX((p)|(q)))|(E(p)U(q))))"
+#ctl1 = "!(EG((EX((p)|(q)))|(E(p)U(q))))"
+ctl1 = "!EG(EX(p|q)|E(pUq))"				#equivalent expression w/o added brackets
 topOp = generateNS(ctl1)
 print topOp.getCTLFormulaString()
 #stateSet = satisfy(topOp)
@@ -68,7 +69,7 @@ for i in range(numNodes):
 	nodesArray2[i].addNeighborNode(nodesArray2[(i + 1) % numNodes])
 graph2 = Graph(nodesArray2)
 sccs = graph2.findSCC()
-for cycle in sccs:	
+for cycle in sccs:
 	string = ""
 	for node in cycle:
 		string += (str(node.getId()) + " ")
@@ -89,7 +90,7 @@ nodesArray3[3].addNeighborNode(nodesArray3[5])
 nodesArray3[5].addNeighborNode(nodesArray3[3])
 graph3 = Graph(nodesArray3)
 sccs3 = graph3.findSCC()
-for cycle in sccs3:	
+for cycle in sccs3:
 	string = ""
 	for node in cycle:
 		string += (str(node.getId()) + " ")
@@ -121,7 +122,8 @@ for i in range(len(kripkeStructure1.getGraphNodeList())):
 #vhdlParser1.generateKrip()
 #print kripkeStructure1
 
-ctl2 = "EX(p)"
+ctl2 = "EXp"				#equivalent expression w/o added brackets
+#ctl2 = "EX(p)"
 ctlStruct2 = generateNS(ctl2)
 collection = satisfy(kripkeStructure1, kripkeStructure1, ctlStruct2)
 

@@ -24,12 +24,12 @@ def generateNS(CTLString):
             returnVal.addNestedOp(arg1,arg2)                    #Add ops that were found recursively
             return returnVal                                    #return EU w/ args that are the returned objects
         elif nextChar == 'G':
-            arg1 = generateNS(CTLString[3:len(CTLString) - 1])  #recursive call on everything to the right of EG
+            arg1 = generateNS(CTLString[2:])                    #recursive call on everything to the right of EG
             returnVal = CTLNestedStructure(CTLOperators.EG)     #Generate EG operator
             returnVal.addNestedOp(arg1,None)                    #Add op that was found recursively
             return returnVal                                    #return EG structure that points to returned above object
         elif nextChar == 'X':
-            arg1 = generateNS(CTLString[3:len(CTLString) -1])                    #recursive call on everything to the right of EX
+            arg1 = generateNS(CTLString[2:])                    #recursive call on everything to the right of EX
             returnVal = CTLNestedStructure(CTLOperators.EX)     #Generate EX operator
             returnVal.addNestedOp(arg1,None)                    #Add op that was found recursively
             return returnVal                                    #return EX structure that points to returned above object
@@ -37,7 +37,7 @@ def generateNS(CTLString):
             print "Invalid Formula"                             #Invalid if it gets here
             return                                              #returns to end generateNSion call
     elif CTLString[0] == '!':                                   #If we see a NOT operator
-        arg1 = generateNS(CTLString[2:len(CTLString) - 1])     #recursive call on the rest of the string
+        arg1 = generateNS(CTLString[1:])                        #recursive call on the rest of the string
         returnVal = CTLNestedStructure(CTLOperators.NOT)        #Generate Not operator
         returnVal.addNestedOp(arg1,None)                        #Add op that was found recursively
         return returnVal                                        #return not pointing to object that was return in above line
@@ -65,7 +65,7 @@ def returnOrStrings(string):
     Returns reference to list of two strings that OR operator operates on
     [start:end] => items start through end-1
     '''
-    counterOpen = 1
+    counterOpen = 0
     counterClosed = 0
     string = string[1:len(string)-1]#strip off outer parantheses
     for index,char in enumerate(string):
@@ -75,14 +75,14 @@ def returnOrStrings(string):
             counterClosed += 1
         elif char == '|':
             if counterOpen == counterClosed:
-                return [string[:index-1],string[index+2:len(string)]]
+                return [string[:index],string[index+1:]]
 
 def returnUntilStrings(string):
     '''
     Returns reference to list of two strings that EU operator operates on
     [start:end] => items start through end-1
     '''
-    counterOpen = 1
+    counterOpen = 0
     counterClosed = 0
     string = string[2:len(string)-1]#strip off outer parantheses and beginning E
     for index,char in enumerate(string):
@@ -92,7 +92,7 @@ def returnUntilStrings(string):
             counterClosed += 1
         elif char == 'U':
             if counterOpen == counterClosed:
-                return [string[:index-1],string[index+2:len(string)]]
+                return [string[:index],string[index+1:]]
 
 if __name__ == "__main__":
     topOp = generateNS('!EG(EX(p|q)|E(pUq))')
