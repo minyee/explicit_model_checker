@@ -66,4 +66,8 @@ class CTLNestedStructure:
 			string += 'EG' + self.returnCTLFormulaString(op.nextOp1)
 	   	elif op.getOp() == CTLOperators.NOT:
 			string += '!' + self.returnCTLFormulaString(op.nextOp1)
+		elif op.getOp() == CTLOperators.TRUE:
+			string += '(TRUE)'
+		elif op.getOp() == CTLOperators.FALSE:
+			string += '(FALSE)'
 	   	return string

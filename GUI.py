@@ -120,7 +120,7 @@ class GUI:
         self.selectedAP = StringVar()
         self.selectedAP.set('')
         self.KSEditor.enterAP = Button(self.KSEditor.CTLEditFrame, text="Input AP", command=lambda: self.addAp(self.selectedAP.get()))
-        self.KSEditor.optionAPs = OptionMenu(self.KSEditor.CTLEditFrame, self.selectedAP, *(self.returnApNames()))
+        self.KSEditor.optionAPs = OptionMenu(self.KSEditor.CTLEditFrame, self.selectedAP, *self.returnApNames())
         self.KSEditor.enterCTL = Button(self.KSEditor.CTLEditFrame, text="Enter", command=lambda: self.generateNestedStructure())
         self.KSEditor.clearCTL = Button(self.KSEditor.CTLEditFrame, text="Clear CTL", command=lambda: self.clearCTL())
         self.KSEditor.CTLDisplay = Label(self.KSEditor.CTLEditFrame,bg='white',text=self.CTLEquation)
@@ -144,7 +144,7 @@ class GUI:
         menu = self.KSEditor.optionAPs['menu']
         menu.delete(0,'end')
         for name in names:
-            menu.add_command(label=name, command=lambda: self.selectedAP.set(name))
+            menu.add_command(label=name, command=lambda selectedName=name: self.selectedAP.set(selectedName))
 
     def clearCTL(self):
         self.CTLEquation.set('')
@@ -208,6 +208,7 @@ class GUI:
         self.KS.ApDictOfDict = {}
         self.KS.ApList = []
         self.updateDropdown()
+        self.selectedAP.set('')
         for node in self.KS.graphNodeList:
             node.ApDict = {}
 
