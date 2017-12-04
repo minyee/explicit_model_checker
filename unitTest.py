@@ -126,6 +126,8 @@ ctl2 = "EXp"				#equivalent expression w/o added brackets
 #ctl2 = "EX(p)"
 ctlStruct2 = generateNS(ctl2)
 collection = satisfy(kripkeStructure1, kripkeStructure1, ctlStruct2)
-
+print "Printing states"
+for state in collection:
+	print state.getId()
 
 print "Completed model_checker unit test, goodbye"

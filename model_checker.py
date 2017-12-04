@@ -4,7 +4,90 @@ import sys
 import io
 from ctl_ops import *
 from tokenize import tokenize, untokenize, NUMBER, STRING, NAME, OP
+from collections import deque
 
+def bfs(kripkeStructure, srcNode, satisfyingStates):
+	currNode = srcNode
+	nodeQueue = []
+	size = len(graphNodeList)
+	visited = [False] * size
+	nodeQueue.append(srcNode)
+	visited[currNode.getId()] = True
+	while len(nodeQueue) > 0:
+		currNode = nodeQueue.deque()
+		visited[currNode.getId()] = True
+		for neighbor in currNode.getAdjacencyList():
+			#only consider nodes that are in the graphNodeList
+			if neighbor in satisfyingStates:
+				if not visited[neighbor.getId()]:
+					nodeQueue.append(neighbor)
+	return
+
+def dfsAG(kripkeStructure, srcNode, satisfyingStates, paths):
+	currNode = srcNode
+	nodeStack = []
+	size = len(graphNodeList)
+	visited = [False] * size
+	parent = [None] * size
+	nodeStack.append(srcNode)
+	visited[currNode.getId()] = True
+
+	path = []
+	while len(nodeStack) > 0:
+		currNode = nodeStack.pop()
+		if currNode not in satisfyingStates:
+			while parent[currNode.getId()] != None:
+				path.append( currNode.getId() )
+			path.reverse()
+			paths.append(path)
+			return
+		visited[currNode.getId()] = True
+		for neighbor in currNode.getAdjacencyList():
+			#only consider nodes that are in the graphNodeList
+			if not visited[neighbor.getId()]:
+				nodeStack.append(neighbor)
+				parent[neighbor.getId()] = currNode
+	return
+
+#...
+# Takes in a CTL formula with AX striped and ceck if the nested structures fail test
+# Returns a dictionary of paths that do not satisfy the AX
+#...
+def findAXCounterExample(ctlSubString, startStates, kripkeStructure):
+	ctlStruct = generateNS(ctlSubString)
+	paths = {}
+	states = satisfy(kripkeStructure, kripkeStructure, ctlStruct)
+	for ss in startStates:
+		for neighbor in ss.getAdjacencyList():
+			currPath = [ss.getId()]
+			if neighbor not in states:
+				currPath.append(neighbor.getId)
+				paths.append(currPath)
+	return paths
+
+def findAGCounterExample(ctlSubString, startStates, kripkeStructure):
+	ctlStruct = generateNS(ctlSubString)
+	paths = {}
+	satisfyingStates = satisfy(kripkeStructure, kripkeStructure, ctlStruct)
+	for ss in startStates:
+		dfsAG(kripkeStructure, ss, satisfyingStates, paths)
+	return paths
+
+def findEXCounterExample(ctlSubstring, startStates, kripkeStructure):
+	ctlStruct = generateNS(ctlSubString)
+	paths = {}
+	satisfyingStates = satisfy(kripkeStructure, kripkeStructure, ctlStruct)
+	for ss in startStates:
+		for neighbor in ss.getAdjacencyList():
+			path = [ss.getId()]
+			assert(neighbor not in satisfyingStates)
+			path.append(neighbor.getId())
+			paths.append(path)
+	return paths
+
+def findEFCounterExample(ctlSubstring, startStates, kripkeStructure):
+	ctlSubstring = '!' + ctlSubstring
+	return findAGCounterExample(ctlSubstring, startStates, kripkeStructure)
 
 def findORWithinBound(charList, start, end):
 	i = 0
