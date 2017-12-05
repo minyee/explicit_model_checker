@@ -142,9 +142,9 @@ def parseCTLRecursive(charList, start, end):
 			ctlStruct = CTLNestedStructure(CTLOperators.AP, charList[start])
 			print charList[start]
 		return ctlStruct
-	
+
 	# Case 2: find account for the OR, we restrict the structure to look like: (exp) | (exp)
-	elif charList[start] == "(": 
+	elif charList[start] == "(":
 		orIndex = findCloseParenIndex(charList, start, end) + 1
 		assert(orIndex >= 0 and orIndex > start and orIndex < end)
 		leftCTL = parseCTLRecursive(charList, start + 1, orIndex - 2)
@@ -154,7 +154,7 @@ def parseCTLRecursive(charList, start, end):
 		ctlStruct.addNestedOp(leftCTL, rightCTL, None)
 		return ctlStruct
 	# Case 3: first for the cases for E, there are three distinct possibilities
-	elif charList[start] == "E": 
+	elif charList[start] == "E":
 		# EX
 		if charList[start + 1] == "X":
 			assert(charList[start + 2] == "(")
@@ -165,7 +165,7 @@ def parseCTLRecursive(charList, start, end):
 			nestedStruct = parseCTLRecursive(charList, start + 3, closedParenIndex - 1)
 			ctlStructure.addNestedOp(nestedStruct, None, None)
 			return ctlStructure
-		
+
 		#EG
 		elif charList[start + 1] == "G":
 			assert(charList[start + 2] == "(")
@@ -176,7 +176,7 @@ def parseCTLRecursive(charList, start, end):
 			nestedStruct = parseCTLRecursive(charList, start + 3, closedParenIndex - 1)
 			ctlStructure.addNestedOp(nestedStruct, None, None)
 			return ctlStructure
-		
+
 		#E(exp1)U(exp2)
 		else:
 			assert(charList[start + 1] == "(")
@@ -263,7 +263,7 @@ def satNOTAP(KripkeSet, apDict):
 	return satAP(KripkeSet, apDictNew)
 
 def satEX(kripkeStructure, KripkeSet, ctlStructure):
-	ctlOp1, _ = ctlStructure.getNestedOp() 
+	ctlOp1, _ = ctlStructure.getNestedOp()
 	firstSet = satisfy(kripkeStructure, KripkeSet, ctlOp1)
 	#APdictArg = ctlStructure.getAPdict()
 	secondSet = []
@@ -295,7 +295,7 @@ def satEU(KripkeStructure, KripkeSet, ctlStructure):
 			newQ = satisfy(KripkeStructure,reversedGraphNeighborList, ctlOp1)
 			if len(newQ) > 0:
 				Q = unionSets(newQ, Q)
-				iterate = True	
+				iterate = True
 	return Q
 
 def satEG(KripkeStructure, KripkeSet, ctlStructure):
@@ -318,7 +318,7 @@ def satEG(KripkeStructure, KripkeSet, ctlStructure):
 	#Done generating subgraph
 	reversedSubGraph = subgraph.getReversedGraph()
 	sccs = subgraph.findSCC()
-	#Note: sccs is a 
+	#Note: sccs is a
 	finalNodes = {}
 	for cycles in sccs:
 		for node in cycles:
@@ -343,7 +343,7 @@ def satEG(KripkeStructure, KripkeSet, ctlStructure):
 # Note: S1, S2 are given as lists
 def unionSets(S1, S2):
 	union = [0]
-	
+
 	if S1 == None:
 		return S2
 	if S2 == None:
@@ -363,7 +363,7 @@ def unionSets(S1, S2):
 # is recursive so that the CTLStructure and satisfy method defined below can work
 def parseCTLFormula(formulaString):
 
-	return 
+	return
 
 # Main recursive routine to check if a Kripke Structure
 # satisfies a CTL statement, which is recursive and is fed as

@@ -5,6 +5,7 @@ import tkFileDialog
 from vhdlParser import *
 from ctl_ops import *
 from recursiveNS import *
+from model_checker import *
 
 #from Tkinter import *from Tkinter import *
 #from Tkinter import Entry
@@ -14,7 +15,7 @@ class GUI:
     Create GUI class from tkinter.
     Potential issues:
         => Need to make sure you can't keep opening new AP/CTL editor windows once one is opening
-        => Need to make sure that the clearCTL command actually destroys all of the CTLNestedStructure objects
+        => Need to make sure that the clearCTL command actually destroys all of the CTLNestedStructure objects (pretty sure this is working)
     '''
     def __init__(self):
         '''
@@ -25,8 +26,15 @@ class GUI:
 
         #GUI STUFF
         self.root = Tk()
+        #kripke structure associated with the GUI
         self.KS = None
+        #Nested Structure translated and untranslated
         self.NS = None
+        self.NSinput = None
+        self.NStop = None
+        self.NSreturn = None
+        #Returned set from satisfy
+        self.returnedSet = None
         self.root.title("VHDL CTL Explicit State Model Checker")
         self.dispVHDLPrompt()
 
@@ -121,7 +129,7 @@ class GUI:
         self.selectedAP.set('')
         self.KSEditor.enterAP = Button(self.KSEditor.CTLEditFrame, text="Input AP", command=lambda: self.addAp(self.selectedAP.get()))
         self.KSEditor.optionAPs = OptionMenu(self.KSEditor.CTLEditFrame, self.selectedAP, *self.returnApNames())
-        self.KSEditor.enterCTL = Button(self.KSEditor.CTLEditFrame, text="Enter", command=lambda: self.generateNestedStructure())
+        self.KSEditor.enterCTL = Button(self.KSEditor.CTLEditFrame, text="Enter", command=lambda: self.begin())
         self.KSEditor.clearCTL = Button(self.KSEditor.CTLEditFrame, text="Clear CTL", command=lambda: self.clearCTL())
         self.KSEditor.CTLDisplay = Label(self.KSEditor.CTLEditFrame,bg='white',text=self.CTLEquation)
         self.KSEditor.CTLEditorLabel.grid(row = 3,column=0,columnspan=6)
@@ -131,12 +139,28 @@ class GUI:
         self.KSEditor.enterCTL.grid(row = 1, column = 1,sticky=E+W+N+S)
         self.KSEditor.clearCTL.grid(row = 2, column = 0,sticky=E+W+N+S)
 
+    def begin(self):
+        '''
+        Generates Nested structure and performs model checking and prints error traces
+        '''
+        #Creates and prints Nested Structure using formula input in ctl box
+        self.generateNestedStructure()
+        #self.returnedSet = satisfy(self.KS, self.KS, self.NS)
+        print self.KS.ApDictOfDict
+        #print self.retrunedSet
+        #Prints nested structure
+        #print self.NSinput
+        #print self.NStop
+        #print self.NSreturn
+        #print self.NS.getCTLFormulaString()
     def generateNestedStructure(self):
         '''
         Generates nested structure from the input CTL formula
         '''
-        self.NS = generateNS(self.CTLEquation.get())
-        print self.NS.getCTLFormulaString()
+        self.NSinput = self.CTLEquation.get()
+        self.NStop = self.NSinput[0:2]
+        self.NSreturn = self.NSinput[2:]
+        self.NS = generateNS(self.NSinput)
         #print self.NS.getCTLFormulaString()
 
     def updateDropdown(self):

@@ -9,15 +9,14 @@ class State(Node):
 		#Initialize to be empty
 		self.ApDict = {}
 
-	def satisfyAP(self, apDict):
+	def satisfyAP(self, ApName):
 		'''
 		Checks if this state in the Kripke structure satisfies the APs
 		'''
-		satisfyOrNot = True
-		for val in apDict:
-			if self.OutputDict.has_key(val):
-				satisfyOrNot = satisfyOrNot and (int(self.OutputDict[val]) != 0)
-		return satisfyOrNot
+		if self.OutputDict.has_key(ApName):
+			return self.ApDict[ApName]
+		else:
+			print "Error! Invalid AP"
 
 	def getAPDict(self):
 		return self.ApDict
@@ -29,6 +28,8 @@ class KripkeStructure(Graph):
 		#Initialize to be empty
 		self.ApDictOfDict = {}
 		self.ApList = []
+		for node in self.graphNodeList:
+			self.ApDictOfDict[node.id] = {}
 
 	def getState(self, index):
 		for state in self.graphNodeList:
@@ -57,8 +58,8 @@ class KripkeStructure(Graph):
 		ApName = ApDefinition[3]
 		#Add ApDict to each node AND generate ApDictOfDict for KS
 		if outputName in self.OutputDictOfDict[0]:
+			self.ApList.append(ApDefinition)
 			for node in self.graphNodeList:
-				self.ApDictOfDict[node.id] = {}
 				if conditionalOperator == "==":
 					if int(self.OutputDictOfDict[node.id][outputName]) == int(outputVal):
 						self.ApDictOfDict[node.id][ApName] = True
@@ -87,5 +88,5 @@ class KripkeStructure(Graph):
 			print "Invalid Output Specified"
 			return False
 		#Keep a list of all the APs attached to the KS
-		self.ApList.append(ApDefinition)
+		#self.ApList.append(ApDefinition)
 		return True

@@ -2,7 +2,8 @@
 import node
 import sys
 from enum import Enum
-from model_checker import *
+#from model_checker import *
+
 class CTLOperators(Enum):
 	NULL = 0
 	TRUE = 1
