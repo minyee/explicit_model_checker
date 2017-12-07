@@ -25,32 +25,6 @@ def bfs(kripkeStructure, srcNode, satisfyingStates):
 					nodeQueue.append(neighbor)
 	return
 
-def dfsAG(kripkeStructure, srcNode, satisfyingStates, paths):
-	currNode = srcNode
-	nodeStack = []
-	size = len(graphNodeList)
-	visited = [False] * size
-	parent = [None] * size
-	nodeStack.append(srcNode)
-	visited[currNode.getId()] = True
-
-	path = []
-	while len(nodeStack) > 0:
-		currNode = nodeStack.pop()
-		if currNode not in satisfyingStates:
-			while parent[currNode.getId()] != None:
-				path.append( currNode.getId() )
-			path.reverse()
-			paths.append(path)
-			return
-		visited[currNode.getId()] = True
-		for neighbor in currNode.getAdjacencyList():
-			#only consider nodes that are in the graphNodeList
-			if not visited[neighbor.getId()]:
-				nodeStack.append(neighbor)
-				parent[neighbor.getId()] = currNode
-	return
-
 def findAXCounterExample(kripkeStructure,kripkeSet,initialState):
     '''
     Returns the first 1-step path from initial state that violates property.
@@ -106,6 +80,37 @@ def findAGCounterExample(kripkeStructure,kripkeSet,initialState):
         nodeStackList.append(node.id)
     return nodeStackList
 
+def findAUCounterExample(kripkeStructure,kripkeSet1,kripkeSet2,initialState):
+    '''
+    modified dfs for AU conterexample generation.
+	A(KS1 U KS2)
+	Runs DFS until it hits a !KS1 before KS2
+    '''
+    nodeStack = []
+    nodeStackList = []
+    nodeStack.append(initialState)
+    size = len(kripkeStructure.graphNodeList)
+    visitedList = [False] * size
+
+    while nodeStack:
+        proceed = True
+        currNode = nodeStack[len(nodeStack)-1]
+        if (currNode in kripkeSet1) or (currNode in kripkeSet2):
+            visitedList[currNode.id] = True
+            if currNode.getAdjacencyList():
+                for nextNode in currNode.getAdjacencyList():
+                    if (visitedList[nextNode.id] == False) and (proceed == True):
+                        nodeStack.append(nextNode)
+                        proceed = False
+                if proceed == True:
+                    nodeStack.pop()
+            else:
+                nodeStack.pop()
+        else:
+            break
+
+    return returnNodeStackIdList(nodeStack)
+
 
 def findEFCounterExample(ctlSubstring, startStates, kripkeStructure):
 	ctlSubstring = '!' + ctlSubstring
@@ -138,17 +143,13 @@ def satEX(kripkeStructure, KripkeSet):
     '''
     returns set of states in kripkeStructure that have transitions to the states
     in the KripkeSet
-    '''
+	'''
     returnSet = []
-    reversedGraph = kripkeStructure.getReversedGraph()
-
     for state in KripkeSet:
-        currID = state.getId()
-        reversedAdjacencyList = reversedGraph[currID].getAdjacencyList()
-        for pointingState in reversedAdjacencyList:
-            for state in kripkeStructure.graphNodeList:
-                if (state.id == pointingState.id) and (state not in returnSet):
-                    returnSet.append(state)
+		currID = state.getId()
+		for pointingState in state.incomingEdges:
+			if pointingState not in returnSet:
+				returnSet.append(pointingState)
     return returnSet
 
 def satEU(KripkeStructure, KripkeSet1, KripkeSet2):
@@ -159,62 +160,78 @@ def satEU(KripkeStructure, KripkeSet1, KripkeSet2):
         find states in KS1 that point directly to KS2
         find states that point directly to these states
         iterate until set of states returned is empty
-    '''
+	'''
     returnSet = KripkeSet2
     reversedGraph = KripkeStructure.getReversedGraph()
     lastSet = KripkeSet2
     while lastSet:
         currentSet = []
     	for node in lastSet:
-            reversedAdjacencyList = reversedGraph[node.id].getAdjacencyList()
-            for pointingState in reversedAdjacencyList:
-                for state in KripkeStructure.graphNodeList:
-                    if (state.id == pointingState.id) :
-                        if (state in KripkeSet1) and (state not in returnSet):
-                            currentSet.append(state)
-                            returnSet.append(state)
+			for pointingState in node.incomingEdges:
+				if (pointingState in KripkeSet1) and (pointingState not in returnSet):
+					currentSet.append(pointingState)
+					returnSet.append(pointingState)
         lastSet = currentSet
     return returnSet
 
-def satEG(KripkeStructure, KripkeSet, ctlStructure):
-	ctlop1, ctlop2 = ctlStructure.getNestedOp
-	Q = satisfy(KripkeStructure, KripkeSet, ctlop1)
-	QID = [0] * len(Q)
-	#i = 0
-	subGraphList = {}
-	for state in Q:
-		subGraphList.insert(state.getId(), Node(state.getId()))
+def satEG(KripkeStructure, KripkeSet):
+	'''
+	Modified DFS. Finds all SCCs and all states with paths through KripkeSet to SCCs
+	'''
+	SCC_IdList = []
+	returnStates = []
+	SCC_nodeList = []
+	size = len(KripkeStructure.graphNodeList)
+	for initialState in KripkeSet:
+		startState = initialState
+		visitedList = [False] * size
+		nodeStack = []
+		nodeStackList = []
+		nodeStack.append(initialState)
 
-	#Generate subgraph to find SCC
-	subgraph = Graph(subGraphList)
-	for state in Q:
-		node = KripkeStructure.getNode(state.getId())
-		for neighbor in node.getAdjacencyList():
-			if neighbor.getId in subGraphList.keys():
-				state.addNeighbor(subGraphList[neighbor.getId])
+		while nodeStack:
+			proceed = True
+			currNode = nodeStack[len(nodeStack)-1]
 
-	#Done generating subgraph
-	reversedSubGraph = subgraph.getReversedGraph()
-	sccs = subgraph.findSCC()
-	#Note: sccs is a
-	finalNodes = {}
-	for cycles in sccs:
-		for node in cycles:
-			if node.getId() not in finalNodes.keys():
-				finalNodes.insert(node.getId(), node)
-			for srcNode in reversedSubGraph.getNode(node.getId()).getAdjacencyList:
-				if srcNode.getId() not in finalNodes.keys():
-					finalNodes.insert(srcNode.getId(), srcNode)
-	finalStates = []
-	for key, val in finalNodes:
-		i = 0
-		for state in KripkeSet:
-			if state.getId() == key:
-				finalStates.append(KripkeSet[i])
-				break
+			visitedList[currNode.id] = True
+
+			if startState in currNode.getAdjacencyList():
+				sortedStacks = []
+				newStack1 = sorted(returnNodeStackIdList(nodeStack))
+				for stack in SCC_IdList:
+					sortedStacks.append(sorted(stack[:len(stack)-1]))
+				if newStack1 not in sortedStacks:
+					nodeStack.append(startState)
+					SCC_IdList.append(returnNodeStackIdList(nodeStack))
+					for node in nodeStack:
+						if node not in returnStates:
+							returnStates.append(node)
+					nodeStack.pop()
+
+			if currNode.getAdjacencyList():
+				for nextNode in currNode.getAdjacencyList():
+					#if nextNode == startState and (doneList[nextNode.id] == False) and (proceed == True):
+					if (visitedList[nextNode.id] == False) and (nextNode in KripkeSet) and (proceed == True):
+						nodeStack.append(nextNode)
+						proceed = False
+				if proceed == True:
+					nodeStack.pop()
 			else:
-				i+=1
-	return finalStates
+				nodeStack.pop()
+	#print SCC_IdList
+	returnStates = satEU(KripkeStructure, KripkeSet, returnStates)
+	#print returnNodeStackIdList(returnStates)
+	return returnStates
+
+def returnNodeStackIdList(nodeStack):
+	'''
+	prints node stack
+	'''
+	nodeStackList = []
+	#turn nodestack into id list
+	for node in nodeStack:
+		nodeStackList.append(node.id)
+	return nodeStackList
 
 def satOR(S1, S2):
     '''
@@ -263,7 +280,6 @@ def modelCheck(initialState,KripkeStructure,ctlStructure,ctlStructure_pre):
     '''
     This function is lit boiiiiii
     '''
-    idList = []
 
     satisfySet = satisfy(KripkeStructure, ctlStructure)
 
@@ -274,47 +290,71 @@ def modelCheck(initialState,KripkeStructure,ctlStructure,ctlStructure_pre):
         generateCE(KripkeStructure,ctlStructure_pre)
 
 def generateCE(KripkeStructure,ctlStructure_pre):
-    '''
-    generates the counterexample for a pre-translation sctl structure
-    '''
-    NStop = ctlStructure_pre[0:2]
-    NSreturn = generateNS(ctlStructure_pre[2:])
-    satisfySet = satisfy(KripkeStructure,NSreturn)
+	'''
+	generates the counterexample for a pre-translation sctl structure
+	'''
+	#Generate kripke sets for counterexample generation
+	NStop = ctlStructure_pre[0:2]
+	if (NStop == 'EX') or (NStop == 'AX') or (NStop == 'AG'):
+		NSreturn = generateNS(ctlStructure_pre[2:])
+		satisfySet = satisfy(KripkeStructure,NSreturn)
+	elif NStop == 'A(':
+		ctl1,ctl2 = returnUntilStrings(ctlStructure_pre)
+		NS1 = generateNS(ctl1)
+		NS2 = generateNS(ctl2)
+		satisfySet1 = satisfy(KripkeStructure,NS1)
+		satisfySet2 = satisfy(KripkeStructure,NS2)
 
-    if NStop == 'EX':
-        paths = findEXCounterExample(KripkeStructure,satisfySet,KripkeStructure.graphNodeList[0])
-    if NStop == 'AX':
-        paths = findAXCounterExample(KripkeStructure,satisfySet,KripkeStructure.graphNodeList[0])
-    if NStop == 'AG':
-        paths = findAGCounterExample(KripkeStructure,satisfySet,KripkeStructure.graphNodeList[0])
-    else:
-        paths = []
-        print "Not Supported... yet"
-    print 'Counterexample: ' +  str(paths)
+	#Perform counterexample generation
+	if NStop == 'EX':
+		paths = findEXCounterExample(KripkeStructure,satisfySet,KripkeStructure.graphNodeList[0])
+	elif NStop == 'AX':
+		paths = findAXCounterExample(KripkeStructure,satisfySet,KripkeStructure.graphNodeList[0])
+	elif NStop == 'AG':
+		paths = findAGCounterExample(KripkeStructure,satisfySet,KripkeStructure.graphNodeList[0])
+	elif NStop == 'A(':
+		paths = findAUCounterExample(KripkeStructure,satisfySet1,satisfySet2,KripkeStructure.graphNodeList[0])
+	else:
+		paths = []
+		print "Not Supported... yet"
+	print 'Counterexample: ' +  str(paths)
 
 
 if __name__ == '__main__':
-    #Generate example with obvious APs
-    f = 'exampleFSM.vhd'
-    parser = vhdlParser(f)                          #Instantiates parser
-    parser.parseVHDL()                              #Generates .krip file
-    KS = parser.returnKripkeStructure()             #creates data structure from .krip file
-    KS.addAP(['q','==','1','q'])
-    KS.addAP(['p','==','1','p'])
+	#Generate example with obvious APs
+	#f = 'exampleFSM2.vhd'
+	f = 'exampleFSM.vhd'
+	parser = vhdlParser(f)                          #Instantiates parser
+	parser.parseVHDL()                              #Generates .krip file
+	KS = parser.returnKripkeStructure()             #creates data structure from .krip file
+	KS.addAP(['q','==','1','q'])
+	KS.addAP(['p','==','1','p'])
 
-    inputStr = "AG!(p&q)"
-    CTL = generateNS(inputStr)
-    #print CTL.returnCTLFormulaString(CTL)
 
-    modelCheck(KS.graphNodeList[0],KS,CTL,inputStr)
+	inputStr = "A(pUq)"
+	CTL = generateNS(inputStr)
+	#print CTL.returnCTLFormulaString(CTL)
+	modelCheck(KS.graphNodeList[0],KS,CTL,inputStr)
 
-'''
-    collection = satisfy(KS,CTL)
-    if collection == None:
-        print None
-    else:
-        for node in collection:
-            print node.id
-'''
+	collection = satisfy(KS,CTL)
+
+	if collection == None:
+		print None
+	else:
+		print returnNodeStackIdList(collection)
+	'''
+			for state in node.getAdjacencyList():
+				if state in collection:
+					nodeList.append(state.id)
+			print 'Node ' + str(node.id) + ' Outgoing Transitions[to states returned]: ' + str(nodeList)
+			nodeList = []
+			for state in node.incomingEdges:
+				if state in collection:
+					nodeList.append(state.id)
+			print 'Node ' + str(node.id) + ' Incoming Transitions[to states returned]: ' + str(nodeList)
+			print
+	'''
+
+
 
     #print KS.getApDictOfDict()

@@ -179,7 +179,7 @@ class vhdlParser:
         for line in f:
             if '{' in line:
                 #Generate stateID and APDictofDict
-                stateID = int(line[0])
+                stateID = int(line.split(':')[0])
                 line = line.strip('\n').replace('}','').replace('{','').replace(' ','').replace(',',':').split(':')[1:len(line)-1]
                 ApDictOfDict[stateID] = {}
                 for i in range(len(line)):
@@ -198,4 +198,13 @@ class vhdlParser:
         for i in range(numStates):
             for item in adjacencyDict[i]:
                 graphNodeList[i].addNeighborNode(graphNodeList[item])
+        incomingEdgeDict = {}
+        for state in graphNodeList:
+            incomingEdgeDict[state.id] = []
+        for state in graphNodeList:
+            for node in state.getAdjacencyList():
+                incomingEdgeDict[node.id].append(state)
+        for key in incomingEdgeDict:
+            for node in incomingEdgeDict[key]:
+                graphNodeList[key].addIncomingEdge(node)
         return KripkeStructure(graphNodeList,ApDictOfDict)

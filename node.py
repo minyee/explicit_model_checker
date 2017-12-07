@@ -4,6 +4,8 @@ import sys
 class Node:
 	def __init__(self, stateID):
 		self.adjacencyList = []
+		self.incomingEdges = []
+		self.inDegree = len(self.incomingEdges)
 		self.numNeighbors = len(self.adjacencyList)
 		self.id = stateID
 
@@ -15,6 +17,11 @@ class Node:
 			self.adjacencyList.append(newNode)
 			self.numNeighbors += 1
 		return
+
+	def addIncomingEdge(self,newNode):
+		if newNode != None:
+			self.incomingEdges.append(newNode)
+		self.inDegree += 1
 
 	def getAdjacencyList(self):
 		return self.adjacencyList
@@ -84,15 +91,15 @@ class Graph:
 		discoverTime[currNodeID] = low[currNodeID] = time
 		inStackBool[currNodeID] = True
 		stack.append(currNode)
-		
-		
+
+
 		for neighborNode in currNode.getAdjacencyList():
 			neighborNodeID = neighborNode.getId()
 			# Case 1: neighbor has not been visited, recur on it
 			#print neighborNodeID
 			if discoverTime[neighborNodeID] < 0:
 				time = self.findCycleRecursive(neighborNode, discoverTime, low, inStackBool, stack, time, CycleCollection)
-				low[currNodeID] = min(low[currNodeID], low[neighborNodeID])	
+				low[currNodeID] = min(low[currNodeID], low[neighborNodeID])
 			elif inStackBool[neighborNodeID]:
 			#Case 2: neighbor has been visited
 			# if visited and is still in stack, then we have a back edge
@@ -104,7 +111,7 @@ class Graph:
 				tmpNode = stack.pop()
 				tmpNodeID = tmpNode.getId()
 				if tmpNodeID != currNodeID:
-					cycle.append(tmpNode)	
+					cycle.append(tmpNode)
 				else:
 					cycle.append(tmpNode)
 					break
