@@ -7,6 +7,7 @@ class Node:
 		self.incomingEdges = []
 		self.inDegree = len(self.incomingEdges)
 		self.numNeighbors = len(self.adjacencyList)
+		self.visitedTransition = []
 		self.id = stateID
 
 	def getId(self):
@@ -15,6 +16,7 @@ class Node:
 	def addNeighborNode(self, newNode):
 		if newNode != None:
 			self.adjacencyList.append(newNode)
+			self.visitedTransition.append(False)
 			self.numNeighbors += 1
 		return
 
