@@ -11,6 +11,9 @@ def generateNS(CTLString):
         EX                  => EX
         !                   => NOT
     '''
+    CTLString.strip()
+    if CTLString == '' or CTLString == None:
+        return None
     if CTLString[0] == 'E':
         nextChar = CTLString[1]
         if nextChar == '(':                                     #Assume EU is seen
@@ -37,8 +40,7 @@ def generateNS(CTLString):
             returnVal.addNestedOp(trueVal,arg1)                 #generate EF operator
             return returnVal                                    #return translated nested structure
         else:
-            print "Invalid Formula"                             #Invalid if it gets here
-            return                                              #returns to end generateNSion call
+            return None                                         #returns to end generateNSion call
     elif CTLString[0] == 'A':
         nextChar = CTLString[1]
         if nextChar == '(':                                     #A(pUq)
@@ -96,8 +98,7 @@ def generateNS(CTLString):
             returnVal.addNestedOp(egVal,None)                   #Generate AF operator
             return returnVal                                    #return translated nested structure
         else:
-            print "Invalid Formula"                             #Invalid if it gets here
-            return                                              #returns to end generateNSion call
+            return None                                        #returns to end generateNSion call
     elif CTLString[0] == '!':                                   #If we see a NOT operator
         arg1 = generateNS(CTLString[1:])                        #recursive call on the rest of the string
         returnVal = CTLNestedStructure(CTLOperators.NOT)        #Generate Not operator
@@ -111,13 +112,14 @@ def generateNS(CTLString):
             returnVal = CTLNestedStructure(CTLOperators.FALSE)
             return returnVal
         else:
-            str1,str2 = returnOr_AndStrings(CTLString)                  #first string is contained to left side of | to first (
+            str1,str2 = returnOr_And_Impl_Strings(CTLString)                  #first string is contained to left side of | to first (
             arg1 = generateNS(str1)                                     #recursive call for arg1
             arg2 = generateNS(str2)                                     #recursive call for arg2
-            if returnOpType(CTLString):
-                returnVal = CTLNestedStructure(CTLOperators.OR)         #Generate EU operator
+            opType = returnOpType(CTLString)
+            if opType == 1:
+                returnVal = CTLNestedStructure(CTLOperators.OR)         #Generate OR operator
                 returnVal.addNestedOp(arg1,arg2)                        #Add ops that were found recursively
-            else:                                                       #Assume that AND is seen
+            elif opType == 2:                                                       #Assume that AND is seen
                 returnVal = CTLNestedStructure(CTLOperators.NOT)
                 orVal = CTLNestedStructure(CTLOperators.OR)
                 notVal1 = CTLNestedStructure(CTLOperators.NOT)
@@ -126,17 +128,23 @@ def generateNS(CTLString):
                 notVal2.addNestedOp(arg2,None)
                 orVal.addNestedOp(notVal1,notVal2)
                 returnVal.addNestedOp(orVal,None)
+            else:
+                #not(p) or q
+                #Frigging implication!!
+                returnVal = CTLNestedStructure(CTLOperators.OR)
+                notVal1 = CTLNestedStructure(CTLOperators.NOT)
+                notVal1.addNestedOp(arg1,None)
+                returnVal.addNestedOp(notVal1,arg2)
             return returnVal
-    #elif CTLString == 'p' or CTLString == 'q':                  #TERMINAL CASE
+    #elif re.match('^[a-z]+$',CTLString) is not None and CTLString in ApNames:            #if only lowercase letters assume AP
     elif re.match('^[a-z]+$',CTLString) is not None:            #if only lowercase letters assume AP
-    #elif CTLString in returnApNames():                         #TERMINAL CASE
         returnVal = CTLNestedStructure(CTLOperators.AP)         #Create AP Op
         returnVal.addLabel(CTLString)                           #Add label
         return returnVal                                        #Return AP op
     else:
-        print "Invalid Formula"
+        return None                                         #returns to end generateNSion call
 
-def returnOr_AndStrings(string):
+def returnOr_And_Impl_Strings(string):
     '''
     Returns reference to list of two strings that OR operator operates on
     [start:end] => items start through end-1
@@ -149,7 +157,7 @@ def returnOr_AndStrings(string):
             counterOpen += 1
         if char == ')':
             counterClosed += 1
-        elif char == '|' or char == '&':
+        elif char == '|' or char == '&' or char == '>':
             if counterOpen == counterClosed:
                 return [string[:index],string[index+1:]]
 
@@ -184,10 +192,13 @@ def returnOpType(string):
             counterClosed += 1
         elif char == '|':
             if counterOpen == counterClosed:
-                return True
+                return 1
         elif char == '&':
             if counterOpen == counterClosed:
-                return False
+                return 2
+        elif char == '>':
+            if counterOpen == counterClosed:
+                return 3
 
 if __name__ == "__main__":
     #topOp = generateNS('!AX(EXAF(p|q)|E((FALSE)Uq))')

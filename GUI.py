@@ -6,6 +6,7 @@ from vhdlParser import *
 from ctl_ops import *
 from recursiveNS import *
 from model_checker import *
+import subprocess as sub
 
 #from Tkinter import *from Tkinter import *
 #from Tkinter import Entry
@@ -124,6 +125,7 @@ class GUI:
 
         ######################################################################################################
         self.KSEditor.CTLEditorLabel = Label(self.KSEditor.APEditFrame,text='CTL Equation Editor',font = "Helvetica 16 bold")
+        #self.KSEditor.resultsOutput = Text(self.KSEditor.CTLEditFrame, height=2, width=30)
         self.KSEditor.CTLEntry = Entry(self.KSEditor.CTLEditFrame, textvariable=self.CTLEquation)
         self.selectedAP = StringVar()
         self.selectedAP.set('')
@@ -138,21 +140,18 @@ class GUI:
         self.KSEditor.CTLEntry.grid(row = 1, column = 0,sticky=E+W+N+S)
         self.KSEditor.enterCTL.grid(row = 1, column = 1,sticky=E+W+N+S)
         self.KSEditor.clearCTL.grid(row = 2, column = 0,sticky=E+W+N+S)
+        #self.KSEditor.resultsOutput.grid(row = 3, column = 0,sticky=E+W+N+S)
 
     def begin(self):
         '''
         Generates Nested structure and performs model checking and prints error traces
         '''
-        #Creates and prints Nested Structure using formula input in ctl box
         self.generateNestedStructure()
-        #self.returnedSet = satisfy(self.KS, self.KS, self.NS)
-        print self.KS.ApDictOfDict
-        #print self.retrunedSet
-        #Prints nested structure
-        #print self.NSinput
-        #print self.NStop
-        #print self.NSreturn
-        #print self.NS.getCTLFormulaString()
+        if self.NS != None:
+            print modelCheck(self.KS.graphNodeList[0],self.KS,self.NS,self.NSinput)
+        else:
+            print "Invalid CTL Formula :("
+
     def generateNestedStructure(self):
         '''
         Generates nested structure from the input CTL formula

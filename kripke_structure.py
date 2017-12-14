@@ -13,7 +13,7 @@ class State(Node):
 		'''
 		Checks if this state in the Kripke structure satisfies the APs
 		'''
-		if self.OutputDict.has_key(ApName):
+		if self.ApDict.has_key(ApName):
 			return self.ApDict[ApName]
 		else:
 			print "Error! Invalid AP"

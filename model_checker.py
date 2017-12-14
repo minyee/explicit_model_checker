@@ -48,33 +48,35 @@ def findEXCounterExample(kripkeStructure,kripkeSet,initialState):
         paths.append(path)
     return paths
 
-def findAllAGCounterExamples(kripkeStructure,kripkeSet,initialState,stateFound):
+def findAllPaths(kripkeStructure,sourceNode,destinationNode):
 	'''
-	finds all of them by changing a deepcopy of the kripke structure.
-	stateFound is the last state found. If first call then set to None
+	finds all paths from sourceNode to destinationNode
 	'''
-	k_struct = copy.deepcopy(kripkeStructure)
-	k_set = []
-	for state in k_struct.graphNodeList:
-		for node in kripkeSet:
-			if node.id == state.id:
-				k_set.append(state)
-				break
-	pathLists = []
-	originalLength = len(k_set)
-	for state in k_struct.graphNodeList:
-		for i in range(len(state.getAdjacencyList())):
-			path = findAGCounterExample(k_struct,k_set,k_struct.graphNodeList[0])
-			while path:
-				if path not in pathLists and path:
-					pathLists.append(path)
-				k_set.append(idToNode(path[len(path)-1],k_struct))
-				path = findAGCounterExample(k_struct,k_set,k_struct.graphNodeList[0])
-			for i in range(len(k_set) - originalLength):
-				k_set.pop()
-			rotateAdjacencyList(state)
+	pathList = []
+	nodeStack = []
+	size = len(kripkeStructure.graphNodeList)
+	visited = [False] * size
 
-	return pathLists
+	return findAllPathsRecursive(pathList,sourceNode,destinationNode,visited,nodeStack)
+
+def findAllPathsRecursive(pathList,currentNode,destinationNode,visited,nodeStack):
+	'''
+	finds all paths from sourceNode to destinationNode
+	'''
+	visited[currentNode.id] = True
+	nodeStack.append(currentNode)
+	addition = ''
+
+	if currentNode == destinationNode:
+		#print returnNodeStackIdList(nodeStack)
+		pathList.append(returnNodeStackIdList(nodeStack))
+	else:
+		for nextNode in currentNode.getAdjacencyList():
+			if visited[nextNode.id] == False:
+				findAllPathsRecursive(pathList,nextNode,destinationNode,visited,nodeStack)
+	nodeStack.pop()
+	visited[currentNode.id] = False
+	return pathList
 
 def findAGCounterExample(kripkeStructure,kripkeSet,initialState):
     '''
@@ -118,13 +120,13 @@ def findAUCounterExample(kripkeStructure,kripkeSet1,kripkeSet2,initialState):
 	Runs DFS until it hits a !KS1 before KS2 OR until it hits an SCC state of KS1
 	NEED TO ADD SCC TO COUNTEREXAMPLE! Technically what I have now is still correct.
 	'''
+	SCCString = ''
 	nodeStack = []
 	nodeStackList = []
 	nodeStack.append(initialState)
 	size = len(kripkeStructure.graphNodeList)
 	visitedList = [False] * size
 	SCC_list,SCC_Set = returnSCCSet(kripkeStructure,kripkeSet1)
-	#print SCC_list
 
 	while nodeStack:
 		proceed = True
@@ -145,11 +147,11 @@ def findAUCounterExample(kripkeStructure,kripkeSet1,kripkeSet2,initialState):
 			if currNode in SCC_Set:
 				for SCC in SCC_list:
 					if currNode.id in SCC:
-						print 'Smallest SCC: ' + str(SCC)
+						SCCString = '\tSmallest SCC: ' + str(SCC)
 						break
 			break
 
-	return returnNodeStackIdList(nodeStack)
+	return str(returnNodeStackIdList(nodeStack)) + SCCString
 
 def findEUCounterExample(kripkeStructure,kripkeSet1,kripkeSet2,initialState):
 	'''
@@ -167,12 +169,25 @@ def findEUCounterExample(kripkeStructure,kripkeSet1,kripkeSet2,initialState):
 	elif initialState not in kripkeSet1:
 		CE = returnNodeStackIdList(nodeStack)
 	elif initialState in satEU(kripkeStructure,kripkeStructure.graphNodeList,kripkeSet2):
-		complementKS2 = satNOT(kripkeStructure,kripkeSet2)
-		print 'Violating States in Paths: ' + str(returnNodeStackIdList(kripkeSet2))
-		CE = findAllAGCounterExamples(kripkeStructure,complementKS2,kripkeStructure.graphNodeList[0],None)
+		paths = []
+		#print 'Violating States in Paths: ' + str(returnNodeStackIdList(kripkeSet2))
+		CE = findAllEUCounterExamples(kripkeStructure,kripkeStructure.graphNodeList[0],kripkeSet2)
+		CE = str(CE) + '\nViolating States in Paths: ' + str(returnNodeStackIdList(kripkeSet2))
 	else:
 		CE = "KS2 unreachable from initial state"
 	return CE
+
+def findAllEUCounterExamples(kripkeStructure,initialState,destinationStates):
+	'''
+	finds all paths from to initial state to all states in kripke_set
+	'''
+	paths = []
+	pathList = []
+	for state in destinationStates:
+		pathList = findAllPaths(kripkeStructure,initialState,state)
+		for path in pathList:
+			paths.append(path)
+	return paths
 
 def findEFCounterExample(kripkeStructure,kripkeSet,initialState):
 	'''
@@ -329,13 +344,12 @@ def returnNodeStackIdList(nodeStack):
 		nodeStackList.append(node.id)
 	return nodeStackList
 
-def rotateAdjacencyList(state):
+def rotateAdjacencyList(state,num):
 	'''
-	rotates adjacency list by 1
+	rotates adjacency list by num
 	'''
-	state.adjacencyList = state.adjacencyList[1:] + state.adjacencyList[:1]
+	state.adjacencyList = state.adjacencyList[num:] + state.adjacencyList[:num]
 
-##### version 2.0
 def satisfy(KripkeStructure, ctlStructure):
     '''
     returns set of states that satisfy given ctl property
@@ -370,16 +384,19 @@ def modelCheck(initialState,KripkeStructure,ctlStructure,ctlStructure_pre):
     '''
     This function is lit boiiiiii
     '''
+    outputStr = ''
 
     satisfySet = satisfy(KripkeStructure, ctlStructure)
 
     if initialState in satisfySet:
-        print ctlStructure_pre + " => Property Satisfied!"
+        outputStr = ctlStructure_pre + " => Property Satisfied!"
+        #print outputStr
     else:
-        print ctlStructure_pre + " => Not Satisfied"
-        generateCE(KripkeStructure,ctlStructure_pre)
+        outputStr = ctlStructure_pre + " => Not Satisfied\n"
+        outputStr += generateCE(initialState,KripkeStructure,ctlStructure_pre)
+    return outputStr
 
-def generateCE(KripkeStructure,ctlStructure_pre):
+def generateCE(initialState,KripkeStructure,ctlStructure_pre):
 	'''
 	generates the counterexample for a pre-translation sctl structure
 	'''
@@ -394,26 +411,25 @@ def generateCE(KripkeStructure,ctlStructure_pre):
 		NS2 = generateNS(ctl2)
 		satisfySet1 = satisfy(KripkeStructure,NS1)
 		satisfySet2 = satisfy(KripkeStructure,NS2)
-
 	#Perform counterexample generation
 	if NStop == 'EX':
-		paths = findEXCounterExample(KripkeStructure,satisfySet,KripkeStructure.graphNodeList[0])
+		paths = findEXCounterExample(KripkeStructure,satisfySet,initialState)
 	elif NStop == 'AX':
-		paths = findAXCounterExample(KripkeStructure,satisfySet,KripkeStructure.graphNodeList[0])
+		paths = findAXCounterExample(KripkeStructure,satisfySet,initialState)
 	elif NStop == 'AG':
-		paths = findAGCounterExample(KripkeStructure,satisfySet,KripkeStructure.graphNodeList[0])
+		paths = findAGCounterExample(KripkeStructure,satisfySet,initialState)
 	elif NStop == 'AF':
-		paths = findAFCounterExample(KripkeStructure,satisfySet,KripkeStructure.graphNodeList[0])
+		paths = findAFCounterExample(KripkeStructure,satisfySet,initialState)
 	elif NStop == 'EF':
-		paths = findEFCounterExample(KripkeStructure,satisfySet,KripkeStructure.graphNodeList[0])
+		paths = findEFCounterExample(KripkeStructure,satisfySet,initialState)
 	elif NStop == 'A(':
-		paths = findAUCounterExample(KripkeStructure,satisfySet1,satisfySet2,KripkeStructure.graphNodeList[0])
+		paths = findAUCounterExample(KripkeStructure,satisfySet1,satisfySet2,initialState)
 	elif NStop == 'E(':
-		paths = findEUCounterExample(KripkeStructure,satisfySet1,satisfySet2,KripkeStructure.graphNodeList[0])
+		paths = findEUCounterExample(KripkeStructure,satisfySet1,satisfySet2,initialState)
 	else:
-		paths = []
-		print "Not Supported... yet"
-	print 'Counterexample: ' +  str(paths)
+		paths = "Not Supported... yet"
+	paths = 'Counterexample: ' +  str(paths)
+	return paths
 
 def copySet(kripkeSet):
 	returnSet = []
@@ -424,17 +440,17 @@ def copySet(kripkeSet):
 if __name__ == '__main__':
 	#Generate example with obvious APs
 	#f = 'exampleFSM2.vhd'
-	f = 'exampleFSM.vhd'
+	f = 'exampleFSM3.vhd'
 	parser = vhdlParser(f)                          #Instantiates parser
 	parser.parseVHDL()                              #Generates .krip file
 	KS = parser.returnKripkeStructure()             #creates data structure from .krip file
 	KS.addAP(['q','==','1','q'])
 	KS.addAP(['p','==','1','p'])
 
-	inputStr = "EF(!p&!q)"
+	inputStr = "AG(q>p)"
 	CTL = generateNS(inputStr)
 	#print CTL.returnCTLFormulaString(CTL)
-	modelCheck(KS.graphNodeList[0],KS,CTL,inputStr)
+	print modelCheck(KS.graphNodeList[0],KS,CTL,inputStr)
 
 	#collection = satisfy(KS,CTL)
 
