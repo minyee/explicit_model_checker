@@ -8,23 +8,6 @@ from collections import deque
 from vhdlParser import *
 from recursiveNS import *
 
-def bfs(kripkeStructure, srcNode, satisfyingStates):
-	currNode = srcNode
-	nodeQueue = []
-	size = len(graphNodeList)
-	visited = [False] * size
-	nodeQueue.append(srcNode)
-	visited[currNode.getId()] = True
-	while len(nodeQueue) > 0:
-		currNode = nodeQueue.deque()
-		visited[currNode.getId()] = True
-		for neighbor in currNode.getAdjacencyList():
-			#only consider nodes that are in the graphNodeList
-			if neighbor in satisfyingStates:
-				if not visited[neighbor.getId()]:
-					nodeQueue.append(neighbor)
-	return
-
 def findAXCounterExample(kripkeStructure,kripkeSet,initialState):
     '''
     Returns the first 1-step path from initial state that violates property.
@@ -47,6 +30,28 @@ def findEXCounterExample(kripkeStructure,kripkeSet,initialState):
         path.append(neighbor.getId())
         paths.append(path)
     return paths
+
+def findEGCounterExample(kripkeStructure, kripkeSet, initialState):
+    '''
+    EG counterexample generation. Provides minimum amount of information
+    '''
+    sccIDList, sccNodes = returnSCCSet(kripkeStructure, kripkeSet)
+    hasSCC = False
+    for scc in sccIDList:
+        if len(scc) > 1:
+            hasSCC = True
+    if not hasSCC:
+        return "There are no non-negligible SCC's, hence EGp cannot be true"
+    elif initialState not in kripkeSet:
+        return "Initial State does not satisfy the p in EGp"
+    else:
+        visited = dfsEG(kripkeStructure, initialState, kripkeSe)
+        for scc in sccIDList:
+        	if len(scc) > 1:
+        		for nodeID in scc:
+        			assert(not visited[nodeID])
+        return "All non negligible SCC's are not reachable through dfs"
+        # in this case, we need to prove that the SCC is not reachable for paths that p has to be true
 
 def findAllPaths(kripkeStructure,sourceNode,destinationNode):
 	'''
@@ -327,7 +332,7 @@ def satOR(S1, S2):
 def idToNode(nodeId,kripkeStructure):
 	'''
 	just returns the node corresponding to the id. Don't want to assume that
-	you can just index the graphnode list
+	you can just index the graphnode list (even though you can...)
 	'''
 	for node in kripkeStructure.graphNodeList:
 		if node.id == nodeId:
@@ -343,12 +348,6 @@ def returnNodeStackIdList(nodeStack):
 	for node in nodeStack:
 		nodeStackList.append(node.id)
 	return nodeStackList
-
-def rotateAdjacencyList(state,num):
-	'''
-	rotates adjacency list by num
-	'''
-	state.adjacencyList = state.adjacencyList[num:] + state.adjacencyList[:num]
 
 def satisfy(KripkeStructure, ctlStructure):
     '''
@@ -382,7 +381,7 @@ def satisfy(KripkeStructure, ctlStructure):
 
 def modelCheck(initialState,KripkeStructure,ctlStructure,ctlStructure_pre):
     '''
-    This function is lit boiiiiii
+    Call this function to perform model checking
     '''
     outputStr = ''
 
@@ -402,7 +401,7 @@ def generateCE(initialState,KripkeStructure,ctlStructure_pre):
 	'''
 	#Generate kripke sets for counterexample generation
 	NStop = ctlStructure_pre[0:2]
-	if (NStop == 'EX') or (NStop == 'AX') or (NStop == 'AG') or (NStop == 'AF') or (NStop == 'EF'):
+	if (NStop == 'EX') or (NStop == 'AX') or (NStop == 'AG') or (NStop == 'AF') or (NStop == 'EF') or (NStop == 'EG'):
 		NSreturn = generateNS(ctlStructure_pre[2:])
 		satisfySet = satisfy(KripkeStructure,NSreturn)
 	elif (NStop == 'A(') or (NStop == 'E('):
@@ -426,16 +425,12 @@ def generateCE(initialState,KripkeStructure,ctlStructure_pre):
 		paths = findAUCounterExample(KripkeStructure,satisfySet1,satisfySet2,initialState)
 	elif NStop == 'E(':
 		paths = findEUCounterExample(KripkeStructure,satisfySet1,satisfySet2,initialState)
+	elif NStop == 'EG':
+		paths = findEGCounterExample(KripkeStructure,satisfySet,initialState)
 	else:
 		paths = "Not Supported... yet"
 	paths = 'Counterexample: ' +  str(paths)
 	return paths
-
-def copySet(kripkeSet):
-	returnSet = []
-	for node in kripkeSet:
-		returnSet.append(node)
-	return returnSet
 
 if __name__ == '__main__':
 	#Generate example with obvious APs
@@ -447,30 +442,7 @@ if __name__ == '__main__':
 	KS.addAP(['q','==','1','q'])
 	KS.addAP(['p','==','1','p'])
 
-	inputStr = "AG(q>p)"
+	inputStr = "E(pUq)"
 	CTL = generateNS(inputStr)
 	#print CTL.returnCTLFormulaString(CTL)
 	print modelCheck(KS.graphNodeList[0],KS,CTL,inputStr)
-
-	#collection = satisfy(KS,CTL)
-
-	#if collection == None:
-	#	print None
-	#else:
-	#	print returnNodeStackIdList(collection)
-	'''
-			for state in node.getAdjacencyList():
-				if state in collection:
-					nodeList.append(state.id)
-			print 'Node ' + str(node.id) + ' Outgoing Transitions[to states returned]: ' + str(nodeList)
-			nodeList = []
-			for state in node.incomingEdges:
-				if state in collection:
-					nodeList.append(state.id)
-			print 'Node ' + str(node.id) + ' Incoming Transitions[to states returned]: ' + str(nodeList)
-			print
-	'''
-
-
-
-    #print KS.getApDictOfDict()
