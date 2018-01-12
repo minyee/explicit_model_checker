@@ -159,28 +159,34 @@ def findAUCounterExample(kripkeStructure,kripkeSet1,kripkeSet2,initialState):
 	return str(returnNodeStackIdList(nodeStack)) + SCCString
 
 def findEUCounterExample(kripkeStructure,kripkeSet1,kripkeSet2,initialState):
-	'''
-	1. Checks to see if KS2 is empty. If so, CE is knowledge that it is empty
-	2. Checks to see if initialState is in KS1. If not, CE is initial state
-	3. checks to see if there exists a path from initial state to any KS2 states
-	if so, CE is list of all paths to KS2 states and all states not in KS1 included in paths
-	4. If none of these conditions are met then CE is knowledge KS2 is unreachable from initial state
-	'''
-	nodeStack = [initialState]
-	CE = None
+    '''
+    1. Checks to see if KS2 is empty. If so, CE is knowledge that it is empty
+    2. Checks to see if initialState is in KS1. If not, CE is initial state
+    3. checks to see if there exists a path from initial state to any KS2 states
+    if so, CE is list of all paths to KS2 states and all states not in KS1 included in paths
+    4. If none of these conditions are met then CE is knowledge KS2 is unreachable from initial state
+    '''
+    nodeStack = [initialState]
+    CE = None
+    violatingStates = []
 
-	if not kripkeSet2:
-		CE = 'No states in KS2'
-	elif initialState not in kripkeSet1:
-		CE = returnNodeStackIdList(nodeStack)
-	elif initialState in satEU(kripkeStructure,kripkeStructure.graphNodeList,kripkeSet2):
-		paths = []
-		#print 'Violating States in Paths: ' + str(returnNodeStackIdList(kripkeSet2))
-		CE = findAllEUCounterExamples(kripkeStructure,kripkeStructure.graphNodeList[0],kripkeSet2)
-		CE = str(CE) + '\nViolating States in Paths: ' + str(returnNodeStackIdList(kripkeSet2))
-	else:
-		CE = "KS2 unreachable from initial state"
-	return CE
+    if not kripkeSet2:
+        CE = 'No states in KS2'
+    elif initialState not in kripkeSet1:
+        CE = returnNodeStackIdList(nodeStack)
+    elif initialState in satEU(kripkeStructure,kripkeStructure.graphNodeList,kripkeSet2):
+        paths = []
+        #print 'Violating States in Paths: ' + str(returnNodeStackIdList(kripkeSet2))
+        CE = findAllEUCounterExamples(kripkeStructure,kripkeStructure.graphNodeList[0],kripkeSet2)
+        tempStates = satNOT(kripkeStructure,kripkeSet1)
+        for state in tempStates:
+            if state not in kripkeSet2:
+                violatingStates.append(state)
+
+        CE = str(CE) + '\nViolating States in Paths: ' + str(returnNodeStackIdList(violatingStates))
+    else:
+        CE = "KS2 unreachable from initial state"
+    return CE
 
 def findAllEUCounterExamples(kripkeStructure,initialState,destinationStates):
 	'''
